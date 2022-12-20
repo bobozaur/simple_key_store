@@ -2,7 +2,7 @@ use std::{borrow::Borrow, hash::Hash, sync::Arc, time::Duration};
 
 use crate::drop_guard::DropGuard;
 
-/// A shareable key store that wraps the inner [`DropGuard`] in an [`Arc`]
+/// A shareable key store that wraps the inner `DropGuard` in an [`Arc`]
 /// to make it shareable across threads.
 ///
 /// The keys must be thread safe, cloneable and respect [`std::collections::HashMap`] trait requirements.
