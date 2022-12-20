@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["KeyStore","A shareable key store that wraps the inner `DropGuard` in an [`Arc`] to make it shareable across threads."]]};

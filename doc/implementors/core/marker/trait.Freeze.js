@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"simple_key_store":[["impl&lt;K, V&gt; Freeze for <a class=\"struct\" href=\"simple_key_store/struct.KeyStore.html\" title=\"struct simple_key_store::KeyStore\">KeyStore</a>&lt;K, V&gt;",1,["simple_key_store::keystore::KeyStore"]]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

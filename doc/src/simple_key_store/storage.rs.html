@@ -1,0 +1,400 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/storage.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>storage.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../simple_key_store/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+</pre><pre class="rust"><code><span class="kw">use </span>std::{
+    borrow::Borrow,
+    collections::{BinaryHeap, HashMap},
+    hash::Hash,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        RwLock, RwLockReadGuard, RwLockWriteGuard,
+    },
+    time::{Duration, Instant},
+};
+
+<span class="kw">use crate</span>::{expiring_key::ExpiringKey, notifier::Notifier, value::Value};
+
+<span class="doccomment">/// A shared state struct.
+/// This will essentially be shared between the actual key store
+/// and the cleanup task that removes expired keys.
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>Shared&lt;K, V&gt;
+<span class="kw">where
+    </span>K: Eq + Hash + Clone,
+    V: Clone,
+{
+    <span class="kw">pub </span>storage: RwLock&lt;Storage&lt;K, V&gt;&gt;,
+    <span class="kw">pub </span>notifier: Notifier,
+    <span class="kw">pub </span>run_cleanup: AtomicBool,
+}
+
+<span class="kw">impl</span>&lt;K, V&gt; Shared&lt;K, V&gt;
+<span class="kw">where
+    </span>K: Eq + Hash + Clone,
+    V: Clone,
+{
+    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            storage: RwLock::new(Storage::new()),
+            notifier: Notifier::new(),
+            run_cleanup: AtomicBool::new(<span class="bool-val">true</span>),
+        }
+    }
+
+    <span class="doccomment">/// Convenience method to gain a read lock on the [`Storage`].
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>read(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RwLockReadGuard&lt;Storage&lt;K, V&gt;&gt; {
+        <span class="self">self</span>.storage.read().unwrap()
+    }
+
+    <span class="doccomment">/// Convenience method to gain an exclusive write lock on the [`Storage`].
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>write(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RwLockWriteGuard&lt;Storage&lt;K, V&gt;&gt; {
+        <span class="self">self</span>.storage.write().unwrap()
+    }
+
+    <span class="doccomment">/// Convenience method that triggers the [`Notifier`].
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>notify(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.notifier.notify_one()
+    }
+
+    <span class="doccomment">/// Method used to signal the background task to stop.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>stop_cleanup(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+        <span class="self">self</span>.run_cleanup.store(<span class="bool-val">false</span>, Ordering::Release);
+    }
+}
+
+<span class="doccomment">/// The storage of the `key:value` pairs.
+/// Keys and their values get stored in a [`HashMap`]
+/// and the expiring keys are additionally stored in a Min-[`BinaryHeap`].
+</span><span class="attribute">#[derive(Debug)]
+</span><span class="kw">pub struct </span>Storage&lt;K, V&gt;
+<span class="kw">where
+    </span>K: Eq + Hash + Clone,
+    V: Clone,
+{
+    <span class="kw">pub </span>kv_pairs: HashMap&lt;K, Value&lt;V&gt;&gt;,
+    <span class="kw">pub </span>expirations: BinaryHeap&lt;ExpiringKey&lt;K&gt;&gt;,
+}
+
+<span class="kw">impl</span>&lt;K, V&gt; Storage&lt;K, V&gt;
+<span class="kw">where
+    </span>K: Eq + Hash + Clone,
+    V: Clone,
+{
+    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            kv_pairs: HashMap::new(),
+            expirations: BinaryHeap::new(),
+        }
+    }
+
+    <span class="doccomment">/// Returns an owned value from storage.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>get&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt;
+    <span class="kw">where
+        </span>K: Borrow&lt;Q&gt;,
+        Q: Hash + Eq + <span class="question-mark">?</span>Sized,
+    {
+        <span class="self">self</span>.kv_pairs.get(key).map(Value::clone_inner)
+    }
+
+    <span class="doccomment">/// Inserts a value into storage and sets its expiration, if necessary.
+    </span><span class="kw">pub fn </span>insert(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        key: K,
+        value: V,
+        expire_after: <span class="prelude-ty">Option</span>&lt;Duration&gt;,
+    ) -&gt; (<span class="prelude-ty">Option</span>&lt;V&gt;, bool) {
+        <span class="kw">let </span>(when, notify) = <span class="kw">if let </span><span class="prelude-val">Some</span>(dur) = expire_after {
+            <span class="comment">// An expiration time was set on the value.
+            // Calculate the expiry time.
+            </span><span class="kw">let </span>when = Instant::now() + dur;
+
+            <span class="comment">// If the expiration of the newly inserted key
+            // would happen sooner than that of the min value from the heap
+            // then keep in mind to notify the background task so
+            // it picks up the newer and lower expiration time.
+            </span><span class="kw">let </span>notify = <span class="self">self
+                </span>.expirations
+                .peek()
+                .map(|exp_key| <span class="kw-2">&amp;</span>when &lt; exp_key)
+                .unwrap_or(<span class="bool-val">true</span>);
+
+            <span class="comment">// Add the new expiring key to the heap.
+            </span><span class="kw">let </span>exp_key = ExpiringKey::new(key.clone(), when);
+            <span class="self">self</span>.expirations.push(exp_key);
+
+            <span class="comment">// Return the expiration time and the notify flag.
+            </span>(<span class="prelude-val">Some</span>(when), notify)
+        } <span class="kw">else </span>{
+            <span class="comment">// No expiration set, hence no need to notify the task either.
+            </span>(<span class="prelude-val">None</span>, <span class="bool-val">false</span>)
+        };
+
+        <span class="comment">// Insert the key: value pair into the HashMap.
+        </span><span class="kw">let </span>prev = <span class="self">self
+            </span>.kv_pairs
+            .insert(key, Value::new(value, when))
+            .map(Value::into_inner);
+
+        <span class="comment">// Return previous value and notify flag.
+        </span>(prev, notify)
+    }
+
+    <span class="doccomment">/// Removes a value from storage, returning it.
+    </span><span class="attribute">#[inline]
+    </span><span class="kw">pub fn </span>remove&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt;
+    <span class="kw">where
+        </span>K: Borrow&lt;Q&gt;,
+        Q: Eq + Hash + <span class="question-mark">?</span>Sized,
+    {
+        <span class="self">self</span>.kv_pairs.remove(key).map(Value::into_inner)
+    }
+
+    <span class="doccomment">/// Method used by the background task to
+    /// clean up already expired keys and return
+    /// the expiry time of the next key, if any is set to expire.
+    </span><span class="kw">pub fn </span>cleanup_expired_keys(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Instant&gt; {
+        <span class="comment">// Store current time
+        </span><span class="kw">let </span>now = Instant::now();
+
+        <span class="comment">// Look at the min expiration time from the heap.
+        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(exp_key) = <span class="self">self</span>.expirations.peek() {
+            <span class="comment">// If the minimum is bigger than now,
+            // then return the expiry time so the background task waits for that amount.
+            </span><span class="kw">if </span>exp_key &gt; <span class="kw-2">&amp;</span>now {
+                <span class="kw">return </span><span class="prelude-val">Some</span>(exp_key.expiry_time);
+            }
+
+            <span class="comment">// Otherwise, the key is expired, so we&#39;ll remove it.
+            //
+            // However, we never remove values from the heap apart from
+            // when their expiration time comes.
+            //
+            // It is possible that the expiration time of a key gets
+            // overwritten with a greater value than it initially was.
+            //
+            // To overcome that, we store the correct expiration time of the key
+            // in the hashmap as well, and compare it with the minimum from the heap.
+            //
+            // If they are the same, then the expiration time is valid and they key should be removed.
+            // Otherwise, the expiration is ignored and simply popped from the heap.
+            </span><span class="kw">let </span>exp_is_valid = <span class="self">self
+                </span>.kv_pairs
+                .get(<span class="kw-2">&amp;</span>exp_key.key)
+                .map(|v| v == exp_key)
+                .unwrap_or_default();
+
+            <span class="comment">// Operations have to be separate to satisfy the borrow checker.
+            // We need mutable access here while we used immutable access above.
+            </span><span class="kw">if </span>exp_is_valid {
+                <span class="self">self</span>.kv_pairs.remove(<span class="kw-2">&amp;</span>exp_key.key);
+            }
+
+            <span class="self">self</span>.expirations.pop();
+        }
+
+        <span class="prelude-val">None
+    </span>}
+}
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="simple_key_store" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.0 (69f9c33d7 2022-12-12)" ></div></body></html>
