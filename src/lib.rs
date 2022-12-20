@@ -1,4 +1,4 @@
-//! A simple, thread-safe, synchronous `key:value` storage.
+//! A simple, in-memory, thread-safe, synchronous `key:value` storage with generic key and value types.
 //!
 //! ```
 //! # use simple_key_store::KeyStore;
@@ -46,8 +46,12 @@
 //! thread::sleep(Duration::from_millis(10));
 //!
 //! // The key isn't present anymore, as it expired.
-//! // assert_eq!(key_store.get("b"), None);
+//! assert_eq!(key_store.get("b"), None);
 //! ```
+//!
+//! NOTE: Retrieving a value results in it getting cloned from with storage. 
+//! Also, keys get cloned around as they are used in both the `key:value` pair as well as for expiration 
+//! tracking. It is worth considering wrapping memory expensive types in something like [`std::sync::Arc`].
 
 mod drop_guard;
 mod expiring_key;
