@@ -35,12 +35,16 @@ where
         }
     }
 
+    pub fn notify(&self) {
+        let _ = self.cleanup_task.as_ref().map(|t| t.thread().unpark());
+    }
+
     /// The background task that will clean up expired keys from storage.
     fn cleanup_task(shared: Arc<Shared<K, V>>) {
         // As long as the task is supposed to run
         while shared.run_cleanup.load(Ordering::Acquire) {
             // Get exclusive access to storage
-            let mut guard = shared.write();
+            let opt_exp = shared.write().cleanup_expired_keys();
 
             // Cleanup expired keys and retrieve
             // an optional time when the next key will expire.
@@ -49,11 +53,9 @@ where
             // or to be notified of a key expiring even sooner.
             //
             // Notifying the task simply loops again.
-            match guard.cleanup_expired_keys() {
-                Some(expiry_time) => shared
-                    .notifier
-                    .wait_timeout(guard, Instant::now() - expiry_time),
-                None => shared.notifier.wait(guard),
+            match opt_exp {
+                Some(expiry_time) => thread::park_timeout(Instant::now() - expiry_time),
+                None => thread::park(),
             }
         }
     }
@@ -83,7 +85,7 @@ where
         // Toggle flag
         self.shared.stop_cleanup();
         // Notify task so that it proceeds
-        self.shared.notify();
+        self.notify();
         // Join the handle to wait for task's completion
         self.cleanup_task.take().map(|h| h.join());
     }

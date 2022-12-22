@@ -9,7 +9,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{expiring_key::ExpiringKey, notifier::Notifier, value::Value};
+use crate::{expiring_key::ExpiringKey, value::Value};
 
 /// A shared state struct.
 /// This will essentially be shared between the actual key store
@@ -21,7 +21,6 @@ where
     V: Clone,
 {
     pub storage: RwLock<Storage<K, V>>,
-    pub notifier: Notifier,
     pub run_cleanup: AtomicBool,
 }
 
@@ -33,7 +32,6 @@ where
     pub fn new() -> Self {
         Self {
             storage: RwLock::new(Storage::new()),
-            notifier: Notifier::new(),
             run_cleanup: AtomicBool::new(true),
         }
     }
@@ -48,12 +46,6 @@ where
     #[inline]
     pub fn write(&self) -> RwLockWriteGuard<Storage<K, V>> {
         self.storage.write().unwrap()
-    }
-
-    /// Convenience method that triggers the [`Notifier`].
-    #[inline]
-    pub fn notify(&self) {
-        self.notifier.notify_one()
     }
 
     /// Method used to signal the background task to stop.

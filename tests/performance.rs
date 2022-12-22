@@ -42,7 +42,7 @@ fn thread_task(keystore: KeyStore<String, String>, extension: usize, sender: Sen
 }
 
 #[test]
-fn multithread() {
+fn performance() {
     let keystore = KeyStore::new();
     let mut handles = Vec::new();
     let (sender, receiver) = mpsc::channel();

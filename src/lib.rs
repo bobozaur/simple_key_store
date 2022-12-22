@@ -56,7 +56,6 @@
 mod drop_guard;
 mod expiring_key;
 mod keystore;
-mod notifier;
 mod storage;
 mod value;
 
